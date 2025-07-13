@@ -102,13 +102,11 @@ class FDCleaner:
         self.print_log(f"Starting data cleaning: {self.original_shape[0]} rows, {self.original_shape[1]} columns")
 
         # Step 1: Remove duplicates
-        self.print_log("\n📌 Step 1: Removing duplicate records")
         initial_rows = len(self.df)
         self.df.drop_duplicates(inplace=True)
         self.print_log(f"✓ Removed {initial_rows - len(self.df)} duplicate rows")
 
         # Step 2: Handle missing values (fill with "null" instead of removing)
-        self.print_log("\n📌 Step 2: Handling missing values")
         missing_cols = self.df.columns[self.df.isna().any()].tolist()
 
         # Do not drop any columns with missing values, fill them instead
@@ -134,7 +132,6 @@ class FDCleaner:
             self.print_log("✓ No missing values found in the dataset")
 
         # Step 3: Standardize formats
-        self.print_log("\n📌 Step 3: Standardizing data formats")
         # Handle text columns
         text_cols = self.df.select_dtypes(include=['object']).columns
         for col in text_cols:
@@ -169,7 +166,6 @@ class FDCleaner:
         self.print_log(f"✓ Standardized formats in {len(self.modified_cols)} columns")
 
         # Step 4: Fix inconsistent values
-        self.print_log("\n📌 Step 4: Correcting inconsistent values")
         # Find categorical columns with reasonable number of categories
         cat_cols = [col for col in text_cols if 1 < self.df[col].nunique() < 50]
         fixed_cols = 0
@@ -220,7 +216,6 @@ class FDCleaner:
         self.print_log(f"✓ Fixed inconsistent values in {fixed_cols} columns")
 
         # Step 5: Identify constant attributes (but don't remove them)
-        self.print_log("\n📌 Step 5: Identifying constant attributes")
         # Find columns with only one unique value
         constant_cols = [col for col in self.df.columns
                         if self.df[col].nunique() == 1]
@@ -233,7 +228,6 @@ class FDCleaner:
             self.print_log("✓ No constant columns found")
 
         # Step 6: Remove redundant attributes (totally similar columns)
-        self.print_log("\n📌 Step 6: Removing redundant attributes")
         # Find duplicate columns
         cols_to_drop = []
         duplicate_pairs = []
@@ -259,7 +253,6 @@ class FDCleaner:
             self.print_log("✓ No duplicate columns found")
 
         # Step 7: Verify key constraints
-        self.print_log("\n📌 Step 7: Verifying key constraints")
         # Find candidate keys
         key_candidates = [col for col in self.df.columns
                          if self.df[col].nunique() == len(self.df)]
@@ -285,7 +278,6 @@ class FDCleaner:
                 self.print_log("✓ No obvious key constraints found")
 
         # Step 8: Final consistency check
-        self.print_log("\n📌 Step 8: Final consistency check")
         # Check for any remaining missing values
         if "null" in self.df.values:
             null_count = (self.df == "null").sum().sum()
@@ -294,12 +286,12 @@ class FDCleaner:
         # Check for duplicates
         dupes = self.df.duplicated().sum()
         if dupes > 0:
-            self.print_log(f"⚠️ Warning: {dupes} duplicate rows remain")
+            self.print_log(f" Warning: {dupes} duplicate rows remain")
         else:
-            self.print_log("✓ No duplicate rows in final dataset")
+            self.print_log(" No duplicate rows in final dataset")
 
         # Final summary
-        self.print_log(f"\n✅ Cleaning complete!")
+        self.print_log(f"\n Cleaning complete!")
         self.print_log(f"Original: {self.original_shape[0]} rows, {self.original_shape[1]} columns")
         self.print_log(f"Cleaned:  {self.df.shape[0]} rows, {self.df.shape[1]} columns")
         self.print_log(f"Columns modified: {len(self.modified_cols)}")
@@ -326,16 +318,6 @@ class FDCleaner:
             self.df.to_csv(output_path, index=False, encoding='utf-8')
 
         self.print_log(f"✓ Cleaned dataset saved to: {output_path}")
-
-        # Save log
-        log_path = f"{os.path.splitext(output_path)[0]}_log.txt"
-        with open(log_path, 'w', encoding='utf-8') as f:
-            f.write(f"FD DATA CLEANING LOG - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
-            f.write("=" * 50 + "\n\n")
-            f.write(f"Log generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"User: Anikk1234\n\n")
-            for msg in self.log:
-                f.write(f"{msg}\n")
 
         return output_path
 
